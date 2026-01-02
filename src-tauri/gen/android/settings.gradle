@@ -2,7 +2,7 @@ pluginManagement {
     repositories {
         google()
         mavenCentral()
-        gradlePluginPortal() // <--- تأكد من وجوده هنا أيضاً
+        gradlePluginPortal()
     }
 }
 
@@ -16,3 +16,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "dashboard-calc"
 include(":app")
+
+// 👇👇👇 هذا هو السطر الذي نسيناه وهو الذي يحل المشكلة 👇👇👇
+apply(from = "./tauri.settings.gradle")
