@@ -1,8 +1,8 @@
 pluginManagement {
     repositories {
-        gradlePluginPortal() // <--- الأولوية الأولى لتحميل إضافات Rust
         google()
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 
@@ -14,8 +14,8 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "dashboard-calc"
-include(":app") // <--- الصيغة الصحيحة في Kotlin (مع الأقواس)
+rootProject.name = 'dashboard-calc'
+include ':app'
 
-// استدعاء إعدادات Tauri
-apply(from = "./tauri.settings.gradle")
+// 👇👇 الصيغة الصحيحة لـ Groovy (بدون أقواس) 👇👇
+apply from: './tauri.settings.gradle'
