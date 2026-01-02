@@ -15,7 +15,7 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "dashboard-calc"
-include(":app")
+include ':app'
 
-// 👇👇👇 هذا هو السطر الذي نسيناه وهو الذي يحل المشكلة 👇👇👇
-apply(from = "./tauri.settings.gradle")
+// التصحيح: استخدام صيغة Groovy الصحيحة (بدون أقواس وبدون علامة يساوي)
+apply from: './tauri.settings.gradle'
