@@ -1,0 +1,33 @@
+[package]
+name = "dashboard-calc"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+rust-version = "1.77.2"
+
+# إعدادات المكتبة (مهمة في الإصدار الجديد)
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.3", features = [] }
+
+[dependencies]
+# المكتبات الأساسية
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+
+# مكتبة tauri الأساسية (الإصدار الجديد)
+tauri = { version = "2.9.5", features = [] }
+tauri-plugin-log = "2"
+
+# مكتبة الآلة الحاسبة التي أضفناها
+meval = "0.2"
+tauri-plugin-sql = { version = "2.3.1", features = ["sqlite"] }
+tauri-plugin-fs = "2.4.4"
+tauri-plugin-share = "2.0.5"
+tauri-plugin-os = "2.3.2"
+tauri-plugin-dialog = "2.4.2"

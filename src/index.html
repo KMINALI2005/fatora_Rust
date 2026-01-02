@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: gap: blob:">
+    <title>فاتورة برو (إصدار 2025)</title>
+    
+    <!-- مكتبات خارجية -->
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default,es2015,es2016,es2017,es2018,es2019,Promise,Array.from,Array.prototype.find,Array.prototype.includes,Object.assign,Object.entries,Object.values" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/dexie@3.2.2/dist/dexie.min.js"></script>
+    
+    <!-- ملف التصميم المنفصل -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- أنماط النافذة المنبثقة الخاصة بالتسديد -->
+    <style>
+        /* تنسيق المودال (النافذة المنبثقة) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-box {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: 2px solid var(--primary-color, #0f766e);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-dark, #115e59);
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .modal-info {
+            background: #f0fdf4;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+            color: #166534;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body class="loading">
+    
+    <!-- مؤشر التحميل -->
+    <div class="loading-spinner" id="loadingSpinner"></div>
+
+    <div class="container">
+        <header class="header"><h1>محلات ابو جعفر الرديني</h1><p>لتجارة المواد الغذائية والحلويات</p></header>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('create', this)">➕ إنشاء فاتورة</button>
+            <button class="tab" onclick="switchTab('saved', this)">🧾 الفواتير</button>
+            <button class="tab" onclick="switchTab('products', this)">📦 المنتجات</button>
+            <button class="tab" onclick="switchTab('reports', this)">📊 التقارير</button>
+            <button class="tab" onclick="switchTab('auditing', this)">📊 مراجعة الحسابات</button>
+        </div>
+        <main>
+            <!-- تبويب إنشاء فاتورة -->
+            <div id="create-tab" class="tab-content active">
+                <section class="section-card">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="customerName">اسم الزبون:</label>
+                            <div style="position: relative;">
+                                <input type="text" id="customerName" autocomplete="off">
+                                <div id="customer-invoices-suggestions"></div>
+                            </div>
+                            <button id="viewCustomerInvoicesBtn" class="btn primary" style="display:none; font-size: 0.9rem; padding: 10px 16px; margin-top: 12px; width:100%;">🧾 عرض كل فواتير هذا الزبون</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="invoiceDate">تاريخ الفاتورة:</label>
+                            <input type="date" id="invoiceDate">
+                        </div>
+                            
+<div class="form-group">
+    <label for="invoiceType">نوع الفاتورة:</label>
+    <select id="invoiceType">
+        <option value="-">-- اختر (اختياري) --</option>
+        <option value="نقدية">فاتورة نقدية</option>
+        <option value="أجل">فاتورة أجل</option>
+        <option value="جزئية">فاتورة جزئية</option>
+    </select>
+</div>
+
+  
+                    </div>
+                </section>
+                <section class="section-card">
+                    <div class="form-grid" style="align-items: end;">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="productName">اسم المنتج:</label>
+                            <input type="text" id="productName" placeholder="اكتب للبحث..." autocomplete="off">
+                            <div id="product-suggestions"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity">الكمية:</label>
+                            <input type="number" id="quantity" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="price">السعر:</label>
+                            <input type="number" id="price" inputmode="numeric">
+                        </div>
+                        <div class="form-group">
+                            <label>المجموع:</label>
+                            <div class="line-total" id="lineTotal">0</div>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="itemNotes">ملاحظات المنتج (اختياري):</label>
+                            <input type="text" id="itemNotes" placeholder="اضافة ملاحظات">
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 24px;">
+                        <button id="addItemBtn" class="btn primary">➕ إضافة المنتج للفاتورة</button>
+                    </div>
+                </section>
+                <div id="itemsContainerWrapper" class="section-card" style="display:none;">
+                    <table style="width:100%; border-collapse: collapse; text-align:center;">
+                        <thead>
+                            <tr style="background: var(--primary-dark); color:white;">
+                                <th style="padding:14px;">#</th><th>المنتج</th><th>الكمية</th><th>السعر</th><th>المجموع</th><th>الملاحظات</th><th colspan="2">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsContainer"></tbody>
+                    </table>
+                </div>
+                    
+<section class="section-card" style="padding: 15px;">
+                    <!-- الصف العلوي: 4 أعمدة أفقية -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 15px; align-items: end;">
+                        
+                        <div class="form-group">
+                            <label style="font-weight:bold; color:var(--primary-dark);">إجمالي الفاتورة الحالية:</label>
+                            <div id="currentTotalAmount" class="line-total" style="font-size: 1.4rem; padding: 10px; min-height: auto;">0 دينار</div>
+                        </div>
+
+                        <div class="form-group">
+                                
+<label style="font-weight:bold; color:var(--primary-dark);">عدد المواد:</label>
+
+  
+                            <div id="itemCount" class="line-total" style="font-size: 1.4rem; padding: 10px; min-height: auto;">0</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-weight:bold;">الحساب السابق:</label>
+                            <input type="number" id="previousBalance" inputmode="numeric" style="font-size: 1.2rem; font-weight:bold; padding: 10px;">
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-weight:bold;">المبلغ الواصل:</label>
+                            <input type="number" id="paymentAmount" inputmode="numeric" style="font-size: 1.2rem; font-weight:bold; padding: 10px;">
+                        </div>
+
+                    </div>
+
+                    <!-- الصف السفلي: المتبقي النهائي -->
+                    <div style="border-top: 2px dashed #ccc; padding-top: 15px;">
+                        <div class="form-group">
+                            <label style="font-size: 1.3rem; font-weight:bold; text-align:center; display:block;">المبلغ المتبقي النهائي:</label>
+                            <div id="remainingAmount" class="line-total" style="font-size: 2rem; color: var(--danger-color); background: #ffebee; border: 2px solid var(--danger-color); font-weight: bold; padding: 10px; min-height: auto;">0 دينار</div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="actions">
+                    <button id="saveBtn" class="btn primary">💾 حفظ الفاتورة</button>
+                    <button class="btn accent" onclick="shareCurrentInvoice()">🔗 مشاركة</button>
+                    <button class="btn danger" onclick="confirmClearInvoice()">🗑️ مسح</button>
+                </div>
+            </div>
+
+            <!-- تبويب الفواتير المحفوظة -->
+            <div id="saved-tab" class="tab-content">
+                <div class="tab-header"><h2>قائمة الفواتير</h2><span class="counter" id="invoicesCounter">0</span></div>
+                <div id="stats-summary" class="section-card" style="margin-bottom: 24px; padding: 20px;"></div>
+                <div id="invoice-filters" class="actions" style="margin-bottom: 24px; border-bottom: 2px solid var(--border-color); padding-bottom: 24px;">
+                    <button class="btn filter-btn active" onclick="applyFilter('all')">الكل</button>
+                    <button class="btn filter-btn" onclick="applyFilter('unpaid')">غير مسددة</button>
+                    <button class="btn filter-btn" onclick="applyFilter('paid')">مسددة</button>
+                </div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label for="invoiceSearchInput">🔎 بحث (باسم الزبون أو رقم الفاتورة):</label>
+                    <input type="search" id="invoiceSearchInput" placeholder="اكتب للبحث...">
+                </div>
+                <div class="actions">
+                    <button class="btn success" onclick="importInvoices()">🔼 استيراد فواتير</button>
+                    <button class="btn primary" onclick="exportInvoices()">🔽 تصدير فواتير</button>
+                    <button class="btn danger" onclick="clearAllInvoices()">🗑️ مسح كل الفواتير</button>
+                    <input type="file" id="import-invoices-file" accept=".json" style="display: none;">
+                </div>
+                <div id="invoicesList" style="margin-top: 24px;"></div>
+            </div>
+
+            <!-- تبويب المنتجات -->
+            <div id="products-tab" class="tab-content">
+                <div class="tab-header"><h2>قائمة المنتجات</h2><span class="counter" id="productsCounter">0</span></div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label for="productSearchInput">🔎 بحث عن منتج:</label>
+                    <input type="search" id="productSearchInput" placeholder="اكتب اسم المنتج للبحث...">
+                </div>
+                <section class="section-card">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="newProductName">اسم المنتج الجديد:</label>
+                            <input type="text" id="newProductName">
+                        </div>
+                        <div class="form-group">
+                            <label for="newProductPrice">سعر المنتج:</label>
+                            <input type="number" id="newProductPrice" inputmode="numeric">
+                        </div>
+                    </div>
+                    <p style="text-align:center; font-size:0.85rem; color: var(--text-light); margin-top:12px;">اضغط "Enter" بعد إدخال السعر للإضافة السريعة</p>
+                </section>
+                <div id="productsListContainer" class="section-card"></div>
+                <div class="actions" style="margin-top:24px; justify-content:center;">
+                    <button class="btn success" onclick="importProducts()">🔼 استيراد منتجات</button>
+                    <button class="btn primary" onclick="exportProducts()">🔽 تصدير منتجات</button>
+                    <button class="btn danger" onclick="clearAllProducts()">🗑️ مسح كل المنتجات</button>
+                    <input type="file" id="import-products-file" accept=".json" style="display: none;">
+                </div>
+            </div>
+
+            <!-- تبويب التقارير -->
+            <div id="reports-tab" class="tab-content">
+                <div class="tab-header"><h2>📊 التقارير والتحليلات</h2></div>
+                <section class="section-card">
+                    <h3 style="margin-bottom: 20px;">فترة التحليل</h3>
+                    <div class="report-filters">
+                        <button class="filter-preset-btn" onclick="setReportDateRange('today')">اليوم</button>
+                        <button class="filter-preset-btn" onclick="setReportDateRange('week')">هذا الأسبوع</button>
+                        <button class="filter-preset-btn" onclick="setReportDateRange('month')">هذا الشهر</button>
+                        <button class="filter-preset-btn" onclick="setReportDateRange('year')">هذه السنة</button>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label for="reportStartDate">من تاريخ:</label><input type="date" id="reportStartDate"></div>
+                        <div class="form-group"><label for="reportEndDate">إلى تاريخ:</label><input type="date" id="reportEndDate"></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 24px;">
+                        <button class="btn primary" onclick="generateReport()">🔍 عرض التقرير</button>
+                    </div>
+                </section>
+                <div id="report-results" style="display: none;">
+                    <div class="actions" style="margin-bottom: 24px;">
+                        <button class="btn success" onclick="exportReportAsPDF()">📥 تصدير PDF</button>
+                        <button class="btn accent" onclick="shareReportText()">📤 مشاركة</button>
+                        <button class="btn primary" onclick="printFullReport()">🖨️ طباعة</button>
+                    </div>
+                    <section class="section-card" id="sales-stats-section">
+                        <h3 style="margin-bottom: 24px;">إحصائيات المبيعات</h3>
+                        <div class="report-grid" id="sales-stats-grid"></div>
+                    </section>
+                    <section class="section-card" id="performance-section">
+                        <h3 style="margin-bottom: 24px;">تحليل الأداء (مقارنة بالفترة السابقة)</h3>
+                        <div class="performance-analysis" id="performance-analysis-content"></div>
+                    </section>
+                    <section class="section-card" id="top-products-section">
+                        <h3 style="margin-bottom: 18px;">أكثر 10 منتجات مبيعًا</h3>
+                        <div style="overflow-x: auto;"><table class="report-table"><thead><tr><th>#</th><th>المنتج</th><th>الكمية المباعة</th><th>إجمالي المبيعات</th><th>عدد الفواتير</th></tr></thead><tbody id="top-products-body"></tbody></table></div>
+                    </section>
+                    <section class="section-card" id="top-customers-section">
+                        <h3 style="margin-bottom: 18px;">أحدث 50 زبائن شراءً</h3>
+                        <div style="overflow-x: auto;"><table class="report-table">    
+    
+<thead>
+    <tr>
+        <th>#</th>
+        <th>الزبون</th>
+        <th>عدد الفواتير</th>
+        <th>إجمالي الفاتورة الحالية</th>
+        <!-- تم حذف عمود إجمالي الحساب السابق من هنا -->
+        <th>إجمالي الواصل</th>
+        <th style="background-color: #e11d48; color: white;">المتبقي (آخر فاتورة)</th>
+    </tr>
+</thead>
+
+  
+
+  <tbody id="top-customers-body"></tbody></table></div>
+                    </section>
+                </div>
+                <div id="no-report-data" class="section-card" style="text-align: center; padding: 40px; display: none;">
+                    <p style="font-size: 1.2rem; color: var(--text-light);">لا توجد بيانات لعرضها في الفترة المحددة. يرجى اختيار فترة زمنية أخرى.</p>
+                </div>
+            </div>
+
+            <!-- تبويب مراجعة الحسابات -->
+            <div id="auditing-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>مراجعة حسابات الزبائن</h2>
+                    <span class="counter" id="customersCounter">0</span>
+                </div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label for="auditingSearchInput">🔎 بحث عن زبون:</label>
+                    <input type="search" id="auditingSearchInput" placeholder="اكتب اسم الزبون للبحث...">
+                </div>
+                <!-- ملخص الإحصائيات -->
+<div id="auditingSummary" class="auditing-summary-header" style="display: none;">
+    <div class="auditing-summary-title">
+        <h3>📊 ملخص الحسابات</h3>
+        <div class="auditing-summary-timestamp" id="auditingTimestamp"></div>
+    </div>
+    <div class="auditing-stats-grid">
+        <div class="auditing-stat-box invoices">
+            <div class="stat-label">📋 عدد الفواتير</div>
+            <div class="stat-value" id="auditingTotalInvoices">0</div>
+        </div>
+        <div class="auditing-stat-box sales">
+            <div class="stat-label">💰 إجمالي المبيعات</div>
+            <div class="stat-value" id="auditingTotalSales">0</div>
+        </div>
+        <div class="auditing-stat-box total">
+            <div class="stat-label">📈 المبلغ الكلي</div>
+            <div class="stat-value" id="auditingTotalAmount">0</div>
+        </div>
+        <div class="auditing-stat-box remaining">
+            <div class="stat-label">⚠️ المتبقي</div>
+            <div class="stat-value" id="auditingTotalRemaining">0</div>
+        </div>
+    </div>
+</div>
+                <div id="auditingList"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- نافذة تسديد الدين -->
+    <div id="repaymentModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">💰 تسديد دفعة مالية</div>
+            <div class="modal-info">
+                <span id="repayCustomerName">اسم الزبون</span><br>
+                <span>إجمالي الدين الحالي: <span id="repayCurrentDebt" style="color: #dc2626;">0</span> دينار</span>
+            </div>
+            <div class="form-group">
+                <label for="repayAmountInput">المبلغ المراد تسديده:</label>
+                <input type="number" id="repayAmountInput" inputmode="numeric" placeholder="ادخل المبلغ هنا">
+            </div>
+            <div class="actions" style="margin-top: 20px;">
+                <button class="btn success" onclick="submitRepayment()">✅ تأكيد التسديد</button>
+                <button class="btn danger" onclick="closeRepaymentModal()">❌ إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نظام الإشعارات -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ملف الجافاسكريبت المنفصل -->
+    <script src="app.js"></script>
+</body>
+</html>
