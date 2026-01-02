@@ -2,7 +2,7 @@ pluginManagement {
     repositories {
         google()
         mavenCentral()
-        gradlePluginPortal()
+        gradlePluginPortal() // <--- تأكد من وجوده هنا أيضاً
     }
 }
 
