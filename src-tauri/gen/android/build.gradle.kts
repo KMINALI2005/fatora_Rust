@@ -1,8 +1,8 @@
 buildscript {
     repositories {
+        gradlePluginPortal() // <--- مهم جداً هنا أيضاً
         google()
         mavenCentral()
-        gradlePluginPortal() // <--- هذا هو السطر المفقود والمهم جداً
     }
     dependencies {
         classpath("com.android.tools.build:gradle:8.2.1")
