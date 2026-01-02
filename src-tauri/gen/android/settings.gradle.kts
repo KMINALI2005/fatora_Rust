@@ -1,8 +1,8 @@
 pluginManagement {
     repositories {
+        gradlePluginPortal()
         google()
         mavenCentral()
-        gradlePluginPortal()
     }
 }
 
@@ -14,8 +14,8 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = 'dashboard-calc'
-include ':app'
+rootProject.name = "dashboard-calc"
+include(":app")
 
-// 👇👇 الصيغة الصحيحة لـ Groovy (بدون أقواس) 👇👇
-apply from: './tauri.settings.gradle'
+// هذا السطر هو الذي يربط مكتبة Tauri بالتطبيق
+apply(from = "./tauri.settings.gradle")
