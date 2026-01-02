@@ -15,7 +15,7 @@ val tauriProperties = Properties().apply {
 
 android {
     namespace = "com.abujafar.fatora"
-    compileSdk = 34 // استخدام إصدار مستقر لضمان تحميل المكتبات
+    compileSdk = 34
 
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "true"
@@ -28,7 +28,6 @@ android {
 
     signingConfigs {
         create("release") {
-            // تأكد أن ملف final_key.keystore موجود في مجلد src-tauri/gen/android/app/
             storeFile = file("final_key.keystore")
             storePassword = "123456"
             keyAlias = "fatora_alias"
@@ -44,10 +43,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
         getByName("debug") {
-            manifestPlaceholders["usesCleartextTraffic"] = "true"
             isDebuggable = true
             isJniDebuggable = true
             isMinifyEnabled = false
@@ -83,13 +80,10 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
     
-    // ربط يدوي مع مكتبة Tauri الأساسية لحل مشكلة Unresolved reference
-    implementation(project(":tauri-android"))
-    
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
 
-// تطبيق إعدادات Tauri التلقائية
+// تطبيق إعدادات Tauri - هذا مهم جداً!
 apply(from = "tauri.build.gradle.kts")
