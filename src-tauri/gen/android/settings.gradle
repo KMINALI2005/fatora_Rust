@@ -7,7 +7,6 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    // 👇👇👇 التغيير هنا: جعلناها PREFER_SETTINGS بدلاً من FAIL_ON_PROJECT_REPOS 👇👇👇
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
@@ -15,5 +14,9 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "dashboard-calc"
-include(":app")
+rootProject.name = 'dashboard-calc'
+include ':app'
+
+// 👇👇👇 هذا هو السطر السحري المفقود 👇👇👇
+include ':tauri-android'
+project(':tauri-android').projectDir = new File('./tauri-android')
