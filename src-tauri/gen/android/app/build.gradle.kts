@@ -3,7 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("rust")
+    id("rust") // <--- هذا هو البديل الجديد للملفات المفقودة
 }
 
 val tauriProperties = Properties().apply {
@@ -50,11 +50,6 @@ android {
             isMinifyEnabled = false
         }
     }
-    packaging {
-        jniLibs {
-            useLegacyPackaging = true
-        }
-    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -70,6 +65,7 @@ android {
     }
 }
 
+// هذا القسم يخبر النظام الجديد بمكان ملفات Rust
 rust {
     rootDirRel = "../../../"
 }
@@ -82,6 +78,3 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
-
-// هذا السطر سيعمل الآن لأننا استعدنا الملف المحذوف
-apply(from = "tauri.build.gradle.kts")
