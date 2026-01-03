@@ -17,5 +17,10 @@ dependencyResolutionManagement {
 rootProject.name = "dashboard-calc"
 include(":app")
 
-// هذا السطر سيعمل الآن لأن الملف tauri.settings.gradle عاد للوجود
-apply(from = "./tauri.settings.gradle")
+// الكود الذكي لاستدعاء إعدادات توري (بصيغة Kotlin الصحيحة)
+val tauriSettings = file("./tauri.settings.gradle")
+if (tauriSettings.exists()) {
+    apply(from = tauriSettings)
+} else {
+    println("Warning: tauri.settings.gradle not found in settings!")
+}
