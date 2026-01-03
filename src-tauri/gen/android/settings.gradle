@@ -7,12 +7,13 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    // 👇👇👇 التغيير هنا: جعلناها PREFER_SETTINGS بدلاً من FAIL_ON_PROJECT_REPOS 👇👇👇
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()
     }
 }
 
-rootProject.name = 'dashboard-calc'
-include ':app'
+rootProject.name = "dashboard-calc"
+include(":app")
