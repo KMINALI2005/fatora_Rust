@@ -1,11 +1,11 @@
 package com.abujafar.fatora
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import app.tauri.android.TauriActivity
 
 class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
-    enableEdgeToEdge()
     super.onCreate(savedInstanceState)
+    // تم حذف enableEdgeToEdge() لضمان نجاح البناء
   }
 }

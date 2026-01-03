@@ -50,6 +50,11 @@ android {
             isMinifyEnabled = false
         }
     }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
