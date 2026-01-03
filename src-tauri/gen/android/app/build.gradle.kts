@@ -28,6 +28,10 @@ android {
         // هذا السطر هو الذي يملأ الفراغ في ملف AndroidManifest.xml
         manifestPlaceholders["usesCleartextTraffic"] = "true"
     }
+    buildFeatures {
+        // هذا السطر سيحل مشكلة Unresolved reference: BuildConfig
+        buildConfig = true 
+    }
 
     signingConfigs {
         create("release") {
@@ -65,16 +69,15 @@ rust {
 }
 
 dependencies {
-    // ربط المشاريع المولدة ديناميكياً
+    // نستخدم هذا الأسلوب لضمان الربط حتى لو تأخر توليد الملفات في الجيتهاب
     implementation(project(":tauri-android"))
     
-    // إضافات Tauri الضرورية (Plugins)
-    implementation(project(":tauri-plugin-dialog"))
-    implementation(project(":tauri-plugin-fs"))
-    implementation(project(":tauri-plugin-share"))
-
+    // التبعيات الأساسية
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.webkit:webkit:1.10.0")
 }
+
+// تطبيق التعديلات التلقائية من توري (Plugins)
+apply(from = "../tauri.build.gradle.kts")

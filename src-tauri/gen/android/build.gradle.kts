@@ -1,16 +1,24 @@
-buildscript {
+pluginManagement {
     repositories {
         gradlePluginPortal()
         google()
         mavenCentral()
     }
-    dependencies {
-        classpath("com.android.tools.build:gradle:8.2.1")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20")
-        classpath("org.mozilla.rust-android-gradle:plugin:0.9.3")
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
     }
 }
 
-task<Delete>("clean") {
-    delete(rootProject.buildDir)
+rootProject.name = "fatora_app"
+include(":app")
+
+// هذا السطر سيبحث عن ملف الإعدادات المولد بواسطة توري في بيئة الجيتهاب
+val tauriSettings = file("./tauri.settings.gradle")
+if (tauriSettings.exists()) {
+    apply(from = tauriSettings)
 }
