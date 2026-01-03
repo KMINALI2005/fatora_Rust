@@ -16,7 +16,3 @@ dependencyResolutionManagement {
 
 rootProject.name = 'dashboard-calc'
 include ':app'
-
-// 👇👇👇 هذا هو السطر السحري المفقود 👇👇👇
-include ':tauri-android'
-project(':tauri-android').projectDir = new File('./tauri-android')
