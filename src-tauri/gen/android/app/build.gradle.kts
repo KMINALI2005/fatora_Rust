@@ -3,7 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("rust") // <--- هذا هو البديل الجديد للملفات المفقودة
+    id("rust")
 }
 
 val tauriProperties = Properties().apply {
@@ -38,18 +38,25 @@ android {
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = true
+            isMinifyEnabled = false // جعلناها false مؤقتاً لضمان نجاح البناء وتفادي أخطاء ProGuard
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
-        getByName("debug") {
-            manifestPlaceholders["usesCleartextTraffic"] = "true"
-            isMinifyEnabled = false
+    }
+
+    // 👇👇👇 هذا هو القسم المفقود الذي يحل المشكلة 👇👇👇
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
         }
     }
+    // 👆👆👆 ------------------------------------ 👆👆👆
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -65,7 +72,6 @@ android {
     }
 }
 
-// هذا القسم يخبر النظام الجديد بمكان ملفات Rust
 rust {
     rootDirRel = "../../../"
 }
@@ -78,6 +84,5 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     
-    // 👇👇👇 هذا السطر هو الأهم لربط المكتبة 👇👇👇
     implementation(project(":tauri-android"))
 }
