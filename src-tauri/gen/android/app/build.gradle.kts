@@ -23,35 +23,14 @@ android {
         targetSdk = 34
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        // هذا السطر هو الذي يملأ الفراغ في ملف AndroidManifest.xml
+        
+        // الحل لمشكلة المانيفست
         manifestPlaceholders["usesCleartextTraffic"] = "true"
     }
+
     buildFeatures {
-        // هذا السطر سيحل مشكلة Unresolved reference: BuildConfig
-        buildConfig = true 
-    }
-
-    signingConfigs {
-        create("release") {
-            storeFile = file("final_key.keystore")
-            storePassword = "123456"
-            keyAlias = "fatora_alias"
-            keyPassword = "123456"
-        }
-    }
-
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("release")
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-                "../proguard-tauri.pro"
-            )
-        }
+        // الحل لمشكلة BuildConfig
+        buildConfig = true
     }
 
     compileOptions {
@@ -62,6 +41,17 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+                "../proguard-tauri.pro"
+            )
+        }
+    }
 }
 
 rust {
@@ -69,15 +59,15 @@ rust {
 }
 
 dependencies {
-    // نستخدم هذا الأسلوب لضمان الربط حتى لو تأخر توليد الملفات في الجيتهاب
     implementation(project(":tauri-android"))
-    
-    // التبعيات الأساسية
+    implementation(project(":tauri-plugin-dialog"))
+    implementation(project(":tauri-plugin-fs"))
+    implementation(project(":tauri-plugin-share"))
+
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.webkit:webkit:1.10.0")
 }
 
-// تطبيق التعديلات التلقائية من توري (Plugins)
 apply(from = "../tauri.build.gradle.kts")
